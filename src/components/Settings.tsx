@@ -17,28 +17,26 @@ import { StateButton } from "./StateButton";
 import { ActionButton } from "./ActionButton";
 
 export const Settings: React.FC = () => {
-    const {
-        color,
-        mirrorX,
-        mirrorY,
-        gridSize,
-        gridLines,
-        drawingTool,
-        undo,
-        redo,
-        setColor,
-        saveGrid,
-        loadGrid,
-        clearGrid,
-        screenshot,
-        setGridSize,
-        destructGrid,
-        constructGrid,
-        toggleMirrorX,
-        toggleMirrorY,
-        setDrawingTool,
-        toggleGridLines,
-    } = useStore((state) => state);
+    const color = useStore((state) => state.color);
+    const mirrorX = useStore((state) => state.mirrorX);
+    const mirrorY = useStore((state) => state.mirrorY);
+    const gridSize = useStore((state) => state.gridSize);
+    const gridLines = useStore((state) => state.gridLines);
+    const drawingTool = useStore((state) => state.drawingTool);
+
+    const undo = useStore((state) => state.undo);
+    const redo = useStore((state) => state.redo);
+    const setColor = useStore((state) => state.setColor);
+    const saveGrid = useStore((state) => state.saveGrid);
+    const loadGrid = useStore((state) => state.loadGrid);
+    const clearGrid = useStore((state) => state.clearGrid);
+    const screenshot = useStore((state) => state.screenshot);
+    const setGridSize = useStore((state) => state.setGridSize);
+    const toggleMirrorX = useStore((state) => state.toggleMirrorX);
+    const toggleMirrorY = useStore((state) => state.toggleMirrorY);
+    const setDrawingTool = useStore((state) => state.setDrawingTool);
+    const toggleGridLines = useStore((state) => state.toggleGridLines);
+
 
     return (
         <div id="settings" className="hidden md:flex flex-col justify-between absolute md:static 2xl:absolute top-auto left-[2vw] h-[580px] md:h-[570px] lg:h-[680px] xl:h-[780px] text-[#3ea6ff] bg-[#181818] border border-[#3ea6ff] rounded-md p-6 lg:p-8" >
@@ -52,11 +50,7 @@ export const Settings: React.FC = () => {
                     min={1}
                     max={64}
                     value={gridSize}
-                    onChange={(_, value) => {
-                        setGridSize(value as number);
-                        destructGrid();
-                        constructGrid();
-                    }}
+                    onChange={(_, value) => setGridSize(value as number)}
                 />
             </div>
 

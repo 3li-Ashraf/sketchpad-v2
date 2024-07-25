@@ -23,7 +23,7 @@ interface Pixel {
  * @property {boolean} gridLines - Whether to show grid lines.
  * @property {string[][]} undoArray - Array of modified pixels for undo.
  * @property {string[][]} redoArray - Array of modified pixels for redo.
- * @property {Pixel[][]} pixelsMatrix - The grid of pixels.
+ * @property {Pixel[][]} pixelsMatrix - Pixels matrix.
  * @property {"pen" | "eraser" | "colorfulPen" | "fill"} drawingTool - The current drawing tool.
  */
 interface State {
@@ -42,10 +42,10 @@ interface State {
  * Store actions interface.
  * @property {() => void} undo - Undo the last drawing action.
  * @property {() => void} redo - Redo the last undone drawing action.
- * @property {() => void} saveGrid - Save the current grid to a JSON file.
+ * @property {() => void} saveGrid - Save the current grid to a JSON file and download it.
  * @property {() => void} loadGrid - Load a grid from a JSON file.
  * @property {() => void} clearGrid - Clear the pixel grid.
- * @property {() => void} screenshot - Take a screenshot of the current grid.
+ * @property {() => void} screenshot - Take a screenshot of the grid.
  * @property {() => void} destructGrid - Destruct the pixel grid.
  * @property {() => void} constructGrid - Construct the pixel grid.
  * @property {() => void} toggleMirrorX - Toggle horizontal mirroring.
@@ -53,7 +53,7 @@ interface State {
  * @property {() => void} toggleGridLines - Toggle the visibility of grid lines.
  * @property {(color: string) => void} setColor - Set the current color.
  * @property {(i: number, j: number) => void} draw - Draw on the grid at specified coordinates.
- * @property {(gridSize: number) => void} setGridSize - Set the grid size.
+ * @property {(gridSize: number) => void} setGridSize - Set the grid size, destruct old grid and construct new grid.
  * @property {(drawingTool: "pen" | "eraser" | "colorfulPen" | "fill") => void} setDrawingTool - Set the current drawing tool.
  * @property {(pixelsMatrix: Pixel[][], i: number, j: number, fillColor: string, matchingColor: string, modifiedPixels: string[]) => void} fill - Fill a contiguous area of the grid with a specified color.
  */
@@ -80,7 +80,7 @@ interface Actions {
  * Zustand store for managing grid state and actions.
  * @returns {State & Actions} - The store state and actions.
  * @example
- * const { gridSize, gridLines, draw, constructGrid, destructGrid } = useStore((state) => state);
+ * const { gridSize, gridLines, draw, constructGrid } = useStore((state) => state);
  */
 export const useStore = create<State & Actions>((set, get) => ({
     gridSize: 32,
@@ -102,12 +102,17 @@ export const useStore = create<State & Actions>((set, get) => ({
     setColor: (color) => set({ color }),
 
     /**
-     * Set the grid size.
+     * Set the grid size, destruct old grid and construct new grid.
      * @param {number} gridSize - The new grid size.
      * @example
      * setGridSize(32);
      */
-    setGridSize: (gridSize) => set({ gridSize }),
+    setGridSize: (gridSize) => {
+        set({ gridSize });
+        get().destructGrid();
+        get().constructGrid();
+
+    },
 
     /**
      * Set the current drawing tool.
@@ -144,16 +149,16 @@ export const useStore = create<State & Actions>((set, get) => ({
      * constructGrid();
      */
     constructGrid: () => set((state) => {
-        const { gridSize } = state;
-
+        const gridSize = state.gridSize;
         const pixelsMatrix: Pixel[][] = new Array(gridSize);
 
         for (let i = 0; i < gridSize; i++) {
             pixelsMatrix[i] = new Array(gridSize);
+
             for (let j = 0; j < gridSize; j++) {
                 pixelsMatrix[i][j] = {
                     index: 0,
-                    colorsArray: ["#FFFFFF"],
+                    colorsArray: ["#FFFFFF"]
                 };
             }
         }
@@ -167,9 +172,9 @@ export const useStore = create<State & Actions>((set, get) => ({
      * destructGrid();
      */
     destructGrid: () => set({
-        pixelsMatrix: [],
         undoArray: [],
         redoArray: [],
+        pixelsMatrix: []
     }),
 
     /**
@@ -177,13 +182,12 @@ export const useStore = create<State & Actions>((set, get) => ({
      * @example
      * clearGrid();
      */
-    clearGrid: () => set((state) => {
-        const { pixelsMatrix, undoArray } = state;
-
-        const newPixelsMatrix = [...pixelsMatrix];
-        const modifiedPixels: string[] = [];
+    clearGrid: () => {
+        const { pixelsMatrix, undoArray } = get();
 
         let allWhite = true;
+        const modifiedPixels: string[] = [];
+        const newPixelsMatrix = [...pixelsMatrix];
 
         newPixelsMatrix.forEach((row, i) => row.forEach((pixel, j) => {
             if (pixel.colorsArray[pixel.index] !== "#FFFFFF") {
@@ -194,14 +198,11 @@ export const useStore = create<State & Actions>((set, get) => ({
             }
         }));
 
-        if (allWhite) {
-            return {}; // If the grid is already white do not update the state
-        }
-        else {
+        if (!allWhite) {
             undoArray.push(modifiedPixels);
-            return { pixelsMatrix: newPixelsMatrix, undoArray };
+            set({ pixelsMatrix: newPixelsMatrix });
         }
-    }),
+    },
 
     /**
      * Draw on the grid at specified coordinates.
@@ -210,13 +211,21 @@ export const useStore = create<State & Actions>((set, get) => ({
      * @example
      * draw(0, 0);
      */
-    draw: (i, j) => set((state) => {
-        const { pixelsMatrix, drawingTool, color, gridSize, mirrorX, mirrorY, undoArray, redoArray } = state;
-
-        const newPixelsMatrix = [...pixelsMatrix];
-        const pixel = newPixelsMatrix[i][j];
+    draw: (i, j) => {
+        const {
+            color,
+            mirrorX,
+            mirrorY,
+            gridSize,
+            undoArray,
+            redoArray,
+            drawingTool,
+            pixelsMatrix
+        } = get();
 
         const modifiedPixels: string[] = []; // Array of pixels that will be modified by the drawing tool
+        const newPixelsMatrix = [...pixelsMatrix];
+        const pixel = newPixelsMatrix[i][j];
 
         let newColor;
         switch (drawingTool) {
@@ -267,9 +276,9 @@ export const useStore = create<State & Actions>((set, get) => ({
             }
 
             undoArray.push(modifiedPixels);
+            set({ pixelsMatrix: newPixelsMatrix });
         }
-
-        if (drawingTool === "fill" && pixel.colorsArray[pixel.index] !== color) {
+        else if (drawingTool === "fill" && pixel.colorsArray[pixel.index] !== color) {
             // Clear the redoArray
             redoArray.length = 0;
 
@@ -277,11 +286,11 @@ export const useStore = create<State & Actions>((set, get) => ({
             newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
 
             get().fill(newPixelsMatrix, i, j, color, pixel.colorsArray[pixel.index], modifiedPixels);
-            undoArray.push(modifiedPixels);
-        }
 
-        return { pixelsMatrix: newPixelsMatrix, undoArray, redoArray };
-    }),
+            undoArray.push(modifiedPixels);
+            set({ pixelsMatrix: newPixelsMatrix });
+        }
+    },
 
     /**
      * Fill a contiguous area of the grid with a specified color.
@@ -313,12 +322,13 @@ export const useStore = create<State & Actions>((set, get) => ({
      * @example
      * undo();
      */
-    undo: () => set((state) => {
-        const { pixelsMatrix, undoArray, redoArray } = state;
-        const newPixelsMatrix = [...pixelsMatrix];
-        const modifiedPixels = undoArray.pop();
+    undo: () => {
+        const { pixelsMatrix, undoArray, redoArray } = get();
 
-        if (!modifiedPixels) return {};
+        const modifiedPixels = undoArray.pop();
+        if (!modifiedPixels) return;
+
+        const newPixelsMatrix = [...pixelsMatrix];
 
         modifiedPixels.forEach((pixel) => {
             const [i, j] = pixel.split(',').map(Number);
@@ -327,20 +337,21 @@ export const useStore = create<State & Actions>((set, get) => ({
 
         redoArray.push(modifiedPixels);
 
-        return { pixelsMatrix: newPixelsMatrix, undoArray, redoArray };
-    }),
+        set({ pixelsMatrix: newPixelsMatrix });
+    },
 
     /**
      * Redo the last undone drawing action.
      * @example
      * redo();
      */
-    redo: () => set((state) => {
-        const { pixelsMatrix, undoArray, redoArray } = state;
-        const newPixelsMatrix = [...pixelsMatrix];
-        const modifiedPixels = redoArray.pop();
+    redo: () => {
+        const { pixelsMatrix, undoArray, redoArray } = get();
 
-        if (!modifiedPixels) return {};
+        const modifiedPixels = redoArray.pop();
+        if (!modifiedPixels) return;
+
+        const newPixelsMatrix = [...pixelsMatrix];
 
         modifiedPixels.forEach((pixel) => {
             const [i, j] = pixel.split(',').map(Number);
@@ -349,11 +360,11 @@ export const useStore = create<State & Actions>((set, get) => ({
 
         undoArray.push(modifiedPixels);
 
-        return { pixelsMatrix: newPixelsMatrix, undoArray, redoArray };
-    }),
+        set({ pixelsMatrix: newPixelsMatrix });
+    },
 
     /**
-     * Take a screenshot of the current grid.
+     * Take a screenshot of the grid.
      * @example
      * screenshot();
      */
@@ -369,7 +380,7 @@ export const useStore = create<State & Actions>((set, get) => ({
     },
 
     /**
-     * Save the current grid to a JSON file.
+     * Save the current grid to a JSON file and download it.
      * @example
      * saveGrid();
      */
@@ -377,7 +388,7 @@ export const useStore = create<State & Actions>((set, get) => ({
         // Serialize the grid data
         const serializedData = JSON.stringify(compress({
             0: get().gridSize,
-            1: get().pixelsMatrix.flat().map(pixel => pixel.colorsArray[pixel.index]),
+            1: get().pixelsMatrix.flat().map(pixel => pixel.colorsArray[pixel.index])
         }));
 
         const blob = new Blob([serializedData], { type: "application/json" });
@@ -406,23 +417,23 @@ export const useStore = create<State & Actions>((set, get) => ({
 
                 if (validateSerializedData(serializedData)) {
                     const data = decompress(JSON.parse(serializedData));
+
                     const gridSize = data[0];
-                    const pixelsArray = data[1];
+                    const colors = data[1];
                     const pixelsMatrix: Pixel[][] = new Array(gridSize);
 
                     for (let i = 0; i < gridSize; i++) {
                         pixelsMatrix[i] = new Array(gridSize);
+
                         for (let j = 0; j < gridSize; j++) {
                             pixelsMatrix[i][j] = {
                                 index: 0,
-                                colorsArray: [pixelsArray[i * gridSize + j]],
+                                colorsArray: [colors[i * gridSize + j]]
                             }
                         }
                     }
 
-                    set({ gridSize });
-                    get().destructGrid();
-                    get().constructGrid();
+                    get().setGridSize(gridSize);
                     set({ pixelsMatrix });
                 }
                 else {
@@ -434,7 +445,7 @@ export const useStore = create<State & Actions>((set, get) => ({
 
             reader.readAsText(file);
         }
-    },
+    }
 }));
 
 /**

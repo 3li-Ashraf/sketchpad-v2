@@ -2,19 +2,14 @@ import { useEffect } from "react";
 import { useStore } from "../store/store";
 
 export const Grid: React.FC = () => {
-    const {
-        gridSize,
-        gridLines,
-        pixelsMatrix,
-        draw,
-        constructGrid,
-        destructGrid
-    } = useStore((state) => state);
+    const gridSize = useStore((state) => state.gridSize);
+    const gridLines = useStore((state) => state.gridLines);
+    const pixelsMatrix = useStore((state) => state.pixelsMatrix);
 
-    useEffect(() => {
-        constructGrid();
-        return destructGrid;
-    }, []);
+    const draw = useStore((state) => state.draw);
+    const constructGrid = useStore((state) => state.constructGrid);
+
+    useEffect(constructGrid, []);
 
     const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
         const touch = event.targetTouches[0];
