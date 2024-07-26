@@ -11,6 +11,7 @@ export const Header: React.FC = () => {
         if (!settings.contains(event.target as Node) && !settingsButton.contains(event.target as Node)) {
             setSettingsVisible(false);
             settings.style.display = "none";
+            document.removeEventListener("click", handleClickOutside);
         }
     }, []);
 
@@ -24,7 +25,7 @@ export const Header: React.FC = () => {
         }
         else {
             settings.style.display = "flex";
-            document.addEventListener("click", handleClickOutside, { once: true });
+            document.addEventListener("click", handleClickOutside);
         }
 
         setSettingsVisible(prev => !prev);
