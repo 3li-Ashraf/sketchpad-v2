@@ -183,7 +183,7 @@ export const useStore = create<State & Actions>((set, get) => ({
      * clearGrid();
      */
     clearGrid: () => {
-        const { pixelsMatrix, undoArray } = get();
+        const { pixelsMatrix, undoArray, redoArray } = get();
 
         let allWhite = true;
         const modifiedPixels: string[] = [];
@@ -199,6 +199,12 @@ export const useStore = create<State & Actions>((set, get) => ({
         }));
 
         if (!allWhite) {
+            // Clear the redoArray
+            redoArray.length = 0;
+
+            // Remove extra colors from the colorsArray of each pixel to prevent undo/redo issues
+            newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
+
             undoArray.push(modifiedPixels);
             set({ pixelsMatrix: newPixelsMatrix });
         }
