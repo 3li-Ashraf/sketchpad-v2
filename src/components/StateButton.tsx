@@ -1,4 +1,4 @@
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip from "@mui/material/Tooltip";
 
 interface StateButtonProps {
     children: React.ReactNode;
@@ -14,7 +14,7 @@ export const StateButton: React.FC<StateButtonProps> = ({ children, title, isAct
                 <button
                     style={{
                         color: isActive ? "#181818" : "#3ea6ff",
-                        backgroundColor: isActive ? "#3ea6ff" : "#181818"
+                        backgroundColor: isActive ? "#3ea6ff" : "#181818",
                     }}
                     onClick={handleClick}
                     className="flex justify-center items-center text-xl w-10 h-10 border border-[#3ea6ff] rounded-md transition-colors duration-75"

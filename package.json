@@ -2,7 +2,7 @@
   "homepage": "https://3li-ashraf.github.io/sketchpad-v2",
   "name": "sketchpad-v2",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "predeploy": "npm run build",

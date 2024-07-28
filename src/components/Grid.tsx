@@ -2,15 +2,17 @@ import { useEffect } from "react";
 import { useStore } from "../store/store";
 
 export const Grid: React.FC = () => {
+    // Extract state and actions from the store
     const gridSize = useStore((state) => state.gridSize);
     const gridLines = useStore((state) => state.gridLines);
     const pixelsMatrix = useStore((state) => state.pixelsMatrix);
-
     const draw = useStore((state) => state.draw);
     const constructGrid = useStore((state) => state.constructGrid);
 
+    // Initialize grid on component mount
     useEffect(constructGrid, []);
 
+    // Handle touch move events to draw on the grid
     const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
         const touch = event.targetTouches[0];
         const div = document.elementFromPoint(touch.clientX, touch.clientY) as HTMLDivElement;
@@ -33,9 +35,9 @@ export const Grid: React.FC = () => {
                 {pixelsMatrix.map((row, i) => (
                     row.map((pixel, j) => (
                         <div
-                            key={`${i},${j}`}
                             data-i={i}
                             data-j={j}
+                            key={`${i},${j}`}
                             style={{
                                 backgroundColor: pixel.colorsArray[pixel.index],
                                 borderTop: gridLines ? "1px solid #9c9c9c" : "",
@@ -47,8 +49,7 @@ export const Grid: React.FC = () => {
                             onMouseEnter={({ buttons }) => { if (buttons === 1) draw(i, j) }}
                             onTouchStart={() => draw(i, j)}
                             onTouchMove={handleTouchMove}
-                        >
-                        </div>
+                        />
                     ))
                 ))}
             </div>

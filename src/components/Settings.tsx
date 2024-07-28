@@ -1,15 +1,13 @@
-import { FaUndo } from "react-icons/fa";
-import { FaRedo } from "react-icons/fa";
-import { FiUpload } from "react-icons/fi";
-import { FiDownload } from "react-icons/fi";
+import { FaUndo, FaRedo } from "react-icons/fa";
+import { FiUpload, FiDownload } from "react-icons/fi";
 import { HiPencil } from "react-icons/hi2";
 import { BiSolidEraser } from "react-icons/bi";
 import { IoMdColorFill } from "react-icons/io";
 import { GrClearOption } from "react-icons/gr";
 import { FaWandMagicSparkles } from "react-icons/fa6";
-import GridOnIcon from '@mui/icons-material/GridOn';
-import CameraIcon from '@mui/icons-material/Camera';
-import DensityLargeIcon from '@mui/icons-material/DensityLarge';
+import GridOnIcon from "@mui/icons-material/GridOn";
+import CameraIcon from "@mui/icons-material/Camera";
+import DensityLargeIcon from "@mui/icons-material/DensityLarge";
 import Slider from "@mui/material/Slider";
 import Tooltip from "@mui/material/Tooltip";
 import { useStore } from "../store/store";
@@ -17,13 +15,13 @@ import { StateButton } from "./StateButton";
 import { ActionButton } from "./ActionButton";
 
 export const Settings: React.FC = () => {
+    // Extract state and actions from the store
     const color = useStore((state) => state.color);
     const mirrorX = useStore((state) => state.mirrorX);
     const mirrorY = useStore((state) => state.mirrorY);
     const gridSize = useStore((state) => state.gridSize);
     const gridLines = useStore((state) => state.gridLines);
     const drawingTool = useStore((state) => state.drawingTool);
-
     const undo = useStore((state) => state.undo);
     const redo = useStore((state) => state.redo);
     const setColor = useStore((state) => state.setColor);
@@ -37,9 +35,8 @@ export const Settings: React.FC = () => {
     const setDrawingTool = useStore((state) => state.setDrawingTool);
     const toggleGridLines = useStore((state) => state.toggleGridLines);
 
-
     return (
-        <div id="settings" className="hidden md:flex flex-col justify-between absolute md:static 2xl:absolute top-auto left-[2vw] h-[580px] md:h-[570px] lg:h-[680px] xl:h-[780px] text-[#3ea6ff] bg-[#181818] border border-[#3ea6ff] rounded-md p-6 lg:p-8" >
+        <div id="settings" className="hidden md:flex flex-col justify-between absolute md:static 2xl:absolute top-auto left-[2vw] h-[580px] md:h-[570px] lg:h-[680px] xl:h-[780px] text-[#3ea6ff] bg-[#181818] border border-[#3ea6ff] rounded-md p-6 lg:p-8">
             {/* Title */}
             <h2 className="font-pixeled text-center text-lg">Settings</h2>
 
@@ -56,7 +53,6 @@ export const Settings: React.FC = () => {
 
             {/* Buttons */}
             <div className="grid grid-cols-2 gap-4 lg:gap-5 xl:gap-8">
-
                 {/* Pen */}
                 <StateButton
                     title="Pen"
@@ -71,7 +67,7 @@ export const Settings: React.FC = () => {
                     <Tooltip title="Color" arrow>
                         <button
                             style={{ backgroundColor: color }}
-                            className=" flex justify-center items-center text-xl w-10 h-10 border border-[#3ea6ff] rounded-md transition-colors duration-75"
+                            className="flex justify-center items-center text-xl w-10 h-10 border border-[#3ea6ff] rounded-md transition-colors duration-75"
                         >
                             <input
                                 type="color"
@@ -118,7 +114,7 @@ export const Settings: React.FC = () => {
                     <BiSolidEraser />
                 </StateButton>
 
-                {/* Grid Lines*/}
+                {/* Grid Lines */}
                 <StateButton
                     title="Grid Lines"
                     isActive={gridLines}
@@ -150,7 +146,7 @@ export const Settings: React.FC = () => {
                     isActive={mirrorY}
                     handleClick={toggleMirrorY}
                 >
-                    <DensityLargeIcon style={{ transform: 'rotate(90deg)' }} />
+                    <DensityLargeIcon style={{ transform: "rotate(90deg)" }} />
                 </StateButton>
 
                 {/* Undo */}
@@ -191,8 +187,7 @@ export const Settings: React.FC = () => {
                         onChange={loadGrid}
                     />
                 </ActionButton>
-
             </div>
-        </div >
+        </div>
     )
 }

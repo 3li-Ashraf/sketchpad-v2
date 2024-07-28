@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
-import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsIcon from "@mui/icons-material/Settings";
 
 export const Header: React.FC = () => {
     const [settingsVisible, setSettingsVisible] = useState(false);
 
+    // Function to handle clicks outside the settings panel
     const handleClickOutside = useCallback((event: MouseEvent) => {
         const settings = document.getElementById("settings")!;
         const settingsButton = document.getElementById("settingsButton")!;
@@ -15,6 +16,7 @@ export const Header: React.FC = () => {
         }
     }, []);
 
+    // Function to handle clicks on the settings button
     const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
         const settings = document.getElementById("settings")!;
@@ -37,7 +39,7 @@ export const Header: React.FC = () => {
                 id="settingsButton"
                 style={{
                     color: settingsVisible ? "#181818" : "#3ea6ff",
-                    backgroundColor: settingsVisible ? "#3ea6ff" : "#181818"
+                    backgroundColor: settingsVisible ? "#3ea6ff" : "#181818",
                 }}
                 onClick={handleButtonClick}
                 className="md:hidden absolute flex justify-center items-center top-auto left-[5vw] w-8 sm:w-10 h-8 sm:h-10 border border-[#3ea6ff] rounded-md transition-colors duration-75"

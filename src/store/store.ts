@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import html2canvas from "html2canvas";
-import { compress, decompress } from 'compress-json';
+import { compress, decompress } from "compress-json";
 
 /**
  * Pixel interface.
@@ -463,11 +463,17 @@ export const useStore = create<State & Actions>((set, get) => ({
  */
 const validateSerializedData = (serializedData: string) => {
     try {
-        const data = decompress(JSON.parse(serializedData)); // Decompress the serialized data
+        // Decompress the serialized data
+        const data = decompress(JSON.parse(serializedData));
 
-        if (Object.keys(data).length !== 2) return false; // Check if the object has exactly 2 keys
-        if (typeof data[0] !== "number" || data[0] < 1 || data[0] > 64) return false; // Check if the grid size is a number between 1 and 64
-        if (!Array.isArray(data[1]) || data[1].length !== data[0] * data[0]) return false; // Check if the colors array has the correct length
+        // Check if the object has exactly 2 keys
+        if (Object.keys(data).length !== 2) return false;
+
+        // Check if the grid size is a number between 1 and 64
+        if (typeof data[0] !== "number" || data[0] < 1 || data[0] > 64) return false;
+
+        // Check if the colors array has the correct length
+        if (!Array.isArray(data[1]) || data[1].length !== data[0] * data[0]) return false;
 
         // Check if each color is a string in the format "#RRGGBB"
         for (const color of data[1]) {
