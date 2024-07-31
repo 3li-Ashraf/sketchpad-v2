@@ -30,20 +30,17 @@ export const Grid: React.FC = () => {
                     gridTemplateColumns: `repeat(${gridSize}, 1fr)`,
                     gridTemplateRows: `repeat(${gridSize}, 1fr)`,
                 }}
-                className="h-full grid bg-white border border-[#9c9c9c]"
+                className="grid h-full bg-[#181818]"
             >
                 {pixelsMatrix.map((row, i) => (
                     row.map((pixel, j) => (
                         <div
+                            key={`${i},${j}`}
                             data-i={i}
                             data-j={j}
-                            key={`${i},${j}`}
                             style={{
                                 backgroundColor: pixel.colorsArray[pixel.index],
-                                borderTop: gridLines ? "1px solid #9c9c9c" : "",
-                                borderLeft: gridLines ? "1px solid #9c9c9c" : "",
-                                borderRight: (gridLines && j === (gridSize - 1)) ? "1px solid #9c9c9c" : "",
-                                borderBottom: (gridLines && i === (gridSize - 1)) ? "1px solid #9c9c9c" : "",
+                                outline: gridLines ? "1px solid #9c9c9c" : "none",
                             }}
                             onMouseDown={() => draw(i, j)}
                             onMouseEnter={({ buttons }) => { if (buttons === 1) draw(i, j) }}
