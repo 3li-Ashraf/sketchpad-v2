@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import html2canvas from "html2canvas";
 import { compress, decompress } from "compress-json";
 
 /**
@@ -375,14 +374,41 @@ export const useStore = create<State & Actions>((set, get) => ({
      * screenshot();
      */
     screenshot: () => {
-        const grid = document.getElementById("grid") as HTMLElement;
-        html2canvas(grid, { scale: 10 }).then((canvas) => {
+        const { gridSize, pixelsMatrix } = get();
+
+        const pixelSize = 50;
+        const canvasWidth = gridSize * pixelSize;
+        const canvasHeight = gridSize * pixelSize;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext("2d");
+
+        if (ctx) {
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            // Draw each pixel from pixelsMatrix
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const pixel = pixelsMatrix[i][j];
+                    const color = pixel.colorsArray[pixel.index];
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(j * pixelSize, i * pixelSize, pixelSize, pixelSize);
+                }
+            }
+
+            // Convert the custom canvas to a downloadable image
             const a = document.createElement('a');
-            a.download = "image.png";
             a.href = canvas.toDataURL();
+            a.download = "image.png";
             a.click();
             a.remove();
-        });
+        }
+
+        canvas.remove();
     },
 
     /**
