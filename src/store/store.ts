@@ -191,18 +191,20 @@ export const useStore = create<State & Actions>((set, get) => ({
         newPixelsMatrix.forEach((row, i) => row.forEach((pixel, j) => {
             if (pixel.colorsArray[pixel.index] !== "#FFFFFF") {
                 allWhite = false;
-                pixel.colorsArray.push("#FFFFFF");
                 pixel.index++;
+                pixel.colorsArray[pixel.index] = "#FFFFFF";
                 modifiedPixels.push(`${i},${j}`);
             }
         }));
 
         if (!allWhite) {
+            console.log(newPixelsMatrix);
             // Clear the redoArray
             redoArray.length = 0;
 
             // Remove extra colors from the colorsArray of each pixel to prevent undo/redo issues
             newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
+            console.log(newPixelsMatrix);
 
             undoArray.push(modifiedPixels);
             set({ pixelsMatrix: newPixelsMatrix });
