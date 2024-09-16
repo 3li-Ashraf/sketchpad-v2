@@ -21,7 +21,7 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
         const x = Number(cell.dataset.i);
         const y = Number(cell.dataset.j);
 
-        if (x && y) {
+        if (!isNaN(x) && !isNaN(y)) {
             draw(x, y);
         }
 
