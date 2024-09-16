@@ -7,7 +7,7 @@ interface StateButtonProps {
     handleClick: () => void;
 }
 
-export const StateButton: React.FC<StateButtonProps> = ({ children, title, isActive, handleClick }) => {
+const StateButton: React.FC<StateButtonProps> = ({ children, title, isActive, handleClick }) => {
     return (
         <div className="flex justify-center items-center">
             <Tooltip title={title} arrow>
@@ -25,3 +25,5 @@ export const StateButton: React.FC<StateButtonProps> = ({ children, title, isAct
         </div>
     )
 }
+
+export default StateButton;

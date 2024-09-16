@@ -1,9 +1,9 @@
-import { useEffect } from "react"
-import { Header } from "./Header"
-import { Main } from "./Main"
-import { Footer } from "./Footer"
+import { useEffect } from "react";
+import Footer from "./Footer";
+import Header from "./Header";
+import Main from "./Main";
 
-export const App: React.FC = () => {
+const App: React.FC = () => {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.ctrlKey || event.metaKey) {
@@ -12,7 +12,11 @@ export const App: React.FC = () => {
             }
         };
 
+        // add shortcuts event listener
         document.addEventListener("keydown", handleKeyDown);
+
+        // remove shortcuts event listener
+        return () => document.removeEventListener("keydown", handleKeyDown);
     }, []);
 
     return (
@@ -23,3 +27,5 @@ export const App: React.FC = () => {
         </div>
     );
 };
+
+export default App;

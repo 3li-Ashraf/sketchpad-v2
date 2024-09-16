@@ -6,7 +6,7 @@ interface ActionButtonProps {
     callback: () => void;
 }
 
-export const ActionButton: React.FC<ActionButtonProps> = ({ children, title, callback }) => {
+const ActionButton: React.FC<ActionButtonProps> = ({ children, title, callback }) => {
     const handleButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         const button = event.currentTarget;
         button.style.setProperty("color", "#181818");
@@ -35,3 +35,5 @@ export const ActionButton: React.FC<ActionButtonProps> = ({ children, title, cal
         </div>
     )
 }
+
+export default ActionButton;

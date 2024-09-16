@@ -1,17 +1,7 @@
-import { create } from "zustand";
 import { compress, decompress } from "compress-json";
-
-/**
- * Pixel interface.
- * @property {number} index - Index of the current color in the colorsArray.
- * @property {string[]} colorsArray - Array of colors that the pixel has been painted with.
- * @example
- * const pixel: Pixel = { index: 0, colorsArray: ["#FFFFFF"] };
- */
-interface Pixel {
-    index: number;
-    colorsArray: string[];
-}
+import { create } from "zustand";
+import InterpolationInfo from "../models/InterpolationInfo";
+import Pixel from "../models/Pixel";
 
 /**
  * Store state interface.
@@ -24,6 +14,7 @@ interface Pixel {
  * @property {string[][]} redoArray - Array of modified pixels for redo.
  * @property {Pixel[][]} pixelsMatrix - Pixels matrix.
  * @property {"pen" | "eraser" | "colorfulPen" | "fill"} drawingTool - The current drawing tool.
+ * @property {InterpolationInfo} interpolationInfo - Information about grid cells interpolation.
  */
 interface State {
     color: string;
@@ -35,6 +26,7 @@ interface State {
     redoArray: string[][];
     pixelsMatrix: Pixel[][];
     drawingTool: "pen" | "eraser" | "colorfulPen" | "fill";
+    interpolationInfo: InterpolationInfo;
 }
 
 /**
@@ -55,6 +47,7 @@ interface State {
  * @property {(gridSize: number) => void} setGridSize - Set the grid size, destruct old grid and construct new grid.
  * @property {(drawingTool: "pen" | "eraser" | "colorfulPen" | "fill") => void} setDrawingTool - Set the current drawing tool.
  * @property {(pixelsMatrix: Pixel[][], i: number, j: number, fillColor: string, matchingColor: string, modifiedPixels: string[]) => void} fill - Fill a contiguous area of the grid with a specified color.
+ * @property {(cell: HTMLDivElement | null, time: number) => void} updateInterpolationInfo - Update the grid cells interpolation information.
  */
 interface Actions {
     undo: () => void;
@@ -71,8 +64,18 @@ interface Actions {
     setColor: (color: string) => void;
     draw: (i: number, j: number) => void;
     setGridSize: (gridSize: number) => void;
-    setDrawingTool: (drawingTool: "pen" | "eraser" | "colorfulPen" | "fill") => void;
-    fill: (pixelsMatrix: Pixel[][], i: number, j: number, fillColor: string, matchingColor: string, modifiedPixels: string[]) => void;
+    setDrawingTool: (
+        drawingTool: "pen" | "eraser" | "colorfulPen" | "fill"
+    ) => void;
+    fill: (
+        pixelsMatrix: Pixel[][],
+        i: number,
+        j: number,
+        fillColor: string,
+        matchingColor: string,
+        modifiedPixels: string[]
+    ) => void;
+    updateInterpolationInfo: (cell: HTMLDivElement | null, time: number) => void;
 }
 
 /**
@@ -91,6 +94,12 @@ export const useStore = create<State & Actions>((set, get) => ({
     undoArray: [],
     redoArray: [],
     pixelsMatrix: [],
+    interpolationInfo: {
+        cell: null,
+        x: -1,
+        y: -1,
+        time: -1,
+    },
 
     /**
      * Set the current color.
@@ -110,7 +119,6 @@ export const useStore = create<State & Actions>((set, get) => ({
         set({ gridSize });
         get().destructGrid();
         get().constructGrid();
-
     },
 
     /**
@@ -147,34 +155,36 @@ export const useStore = create<State & Actions>((set, get) => ({
      * @example
      * constructGrid();
      */
-    constructGrid: () => set((state) => {
-        const gridSize = state.gridSize;
-        const pixelsMatrix: Pixel[][] = new Array(gridSize);
+    constructGrid: () =>
+        set((state) => {
+            const gridSize = state.gridSize;
+            const pixelsMatrix: Pixel[][] = new Array(gridSize);
 
-        for (let i = 0; i < gridSize; i++) {
-            pixelsMatrix[i] = new Array(gridSize);
+            for (let i = 0; i < gridSize; i++) {
+                pixelsMatrix[i] = new Array(gridSize);
 
-            for (let j = 0; j < gridSize; j++) {
-                pixelsMatrix[i][j] = {
-                    index: 0,
-                    colorsArray: ["#FFFFFF"]
-                };
+                for (let j = 0; j < gridSize; j++) {
+                    pixelsMatrix[i][j] = {
+                        index: 0,
+                        colorsArray: ["#FFFFFF"],
+                    };
+                }
             }
-        }
 
-        return { pixelsMatrix };
-    }),
+            return { pixelsMatrix };
+        }),
 
     /**
      * Destruct the pixel grid.
      * @example
      * destructGrid();
      */
-    destructGrid: () => set({
-        undoArray: [],
-        redoArray: [],
-        pixelsMatrix: []
-    }),
+    destructGrid: () =>
+        set({
+            undoArray: [],
+            redoArray: [],
+            pixelsMatrix: [],
+        }),
 
     /**
      * Clear the pixel grid.
@@ -188,21 +198,25 @@ export const useStore = create<State & Actions>((set, get) => ({
         const modifiedPixels: string[] = [];
         const newPixelsMatrix = [...pixelsMatrix];
 
-        newPixelsMatrix.forEach((row, i) => row.forEach((pixel, j) => {
-            if (pixel.colorsArray[pixel.index] !== "#FFFFFF") {
-                allWhite = false;
-                pixel.index++;
-                pixel.colorsArray[pixel.index] = "#FFFFFF";
-                modifiedPixels.push(`${i},${j}`);
-            }
-        }));
+        newPixelsMatrix.forEach((row, i) =>
+            row.forEach((pixel, j) => {
+                if (pixel.colorsArray[pixel.index] !== "#FFFFFF") {
+                    allWhite = false;
+                    pixel.index++;
+                    pixel.colorsArray[pixel.index] = "#FFFFFF";
+                    modifiedPixels.push(`${i},${j}`);
+                }
+            })
+        );
 
         if (!allWhite) {
             // Clear the redoArray
             redoArray.length = 0;
 
             // Remove extra colors from the colorsArray of each pixel to prevent undo/redo issues
-            newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
+            newPixelsMatrix.forEach((row) =>
+                row.forEach((pixel) => (pixel.colorsArray.length = pixel.index + 1))
+            );
 
             undoArray.push(modifiedPixels);
             set({ pixelsMatrix: newPixelsMatrix });
@@ -225,7 +239,7 @@ export const useStore = create<State & Actions>((set, get) => ({
             undoArray,
             redoArray,
             drawingTool,
-            pixelsMatrix
+            pixelsMatrix,
         } = get();
 
         const modifiedPixels: string[] = []; // Array of pixels that will be modified by the drawing tool
@@ -241,7 +255,11 @@ export const useStore = create<State & Actions>((set, get) => ({
                 newColor = "#FFFFFF";
                 break;
             case "colorfulPen":
-                newColor = "#" + Math.floor(Math.random() * 16777216).toString(16).padStart(6, '0');
+                newColor =
+                    "#" +
+                    Math.floor(Math.random() * 16777216)
+                        .toString(16)
+                        .padStart(6, "0");
                 break;
             default:
                 newColor = pixel.colorsArray[pixel.index]; // No change
@@ -253,7 +271,9 @@ export const useStore = create<State & Actions>((set, get) => ({
             redoArray.length = 0;
 
             // Remove extra colors from the colorsArray of each pixel to prevent undo/redo issues
-            newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
+            newPixelsMatrix.forEach((row) =>
+                row.forEach((pixel) => (pixel.colorsArray.length = pixel.index + 1))
+            );
 
             pixel.colorsArray.push(newColor);
             pixel.index++;
@@ -282,15 +302,26 @@ export const useStore = create<State & Actions>((set, get) => ({
 
             undoArray.push(modifiedPixels);
             set({ pixelsMatrix: newPixelsMatrix });
-        }
-        else if (drawingTool === "fill" && pixel.colorsArray[pixel.index] !== color) {
+        } else if (
+            drawingTool === "fill" &&
+            pixel.colorsArray[pixel.index] !== color
+        ) {
             // Clear the redoArray
             redoArray.length = 0;
 
             // Remove extra colors from the colorsArray of each pixel to prevent undo/redo issues
-            newPixelsMatrix.forEach((row) => row.forEach((pixel) => pixel.colorsArray.length = pixel.index + 1));
+            newPixelsMatrix.forEach((row) =>
+                row.forEach((pixel) => (pixel.colorsArray.length = pixel.index + 1))
+            );
 
-            get().fill(newPixelsMatrix, i, j, color, pixel.colorsArray[pixel.index], modifiedPixels);
+            get().fill(
+                newPixelsMatrix,
+                i,
+                j,
+                color,
+                pixel.colorsArray[pixel.index],
+                modifiedPixels
+            );
 
             undoArray.push(modifiedPixels);
             set({ pixelsMatrix: newPixelsMatrix });
@@ -309,17 +340,49 @@ export const useStore = create<State & Actions>((set, get) => ({
      * fill(pixelsMatrix, 0, 0, "#000000", "#FFFFFF", []);
      */
     fill: (pixelsMatrix, i, j, fillColor, matchingColor, modifiedPixels) => {
-        if (i < 0 || i >= pixelsMatrix.length || j < 0 || j >= pixelsMatrix.length) return;
-        if (pixelsMatrix[i][j].colorsArray[pixelsMatrix[i][j].index] !== matchingColor) return;
+        if (i < 0 || i >= pixelsMatrix.length || j < 0 || j >= pixelsMatrix.length)
+            return;
+        if (
+            pixelsMatrix[i][j].colorsArray[pixelsMatrix[i][j].index] !== matchingColor
+        )
+            return;
 
         pixelsMatrix[i][j].colorsArray.push(fillColor);
         pixelsMatrix[i][j].index++;
         modifiedPixels.push(`${i},${j}`);
 
-        get().fill(pixelsMatrix, i + 1, j, fillColor, matchingColor, modifiedPixels);
-        get().fill(pixelsMatrix, i - 1, j, fillColor, matchingColor, modifiedPixels);
-        get().fill(pixelsMatrix, i, j + 1, fillColor, matchingColor, modifiedPixels);
-        get().fill(pixelsMatrix, i, j - 1, fillColor, matchingColor, modifiedPixels);
+        get().fill(
+            pixelsMatrix,
+            i + 1,
+            j,
+            fillColor,
+            matchingColor,
+            modifiedPixels
+        );
+        get().fill(
+            pixelsMatrix,
+            i - 1,
+            j,
+            fillColor,
+            matchingColor,
+            modifiedPixels
+        );
+        get().fill(
+            pixelsMatrix,
+            i,
+            j + 1,
+            fillColor,
+            matchingColor,
+            modifiedPixels
+        );
+        get().fill(
+            pixelsMatrix,
+            i,
+            j - 1,
+            fillColor,
+            matchingColor,
+            modifiedPixels
+        );
     },
 
     /**
@@ -336,7 +399,7 @@ export const useStore = create<State & Actions>((set, get) => ({
         const newPixelsMatrix = [...pixelsMatrix];
 
         modifiedPixels.forEach((pixel) => {
-            const [i, j] = pixel.split(',').map(Number);
+            const [i, j] = pixel.split(",").map(Number);
             newPixelsMatrix[i][j].index--;
         });
 
@@ -359,7 +422,7 @@ export const useStore = create<State & Actions>((set, get) => ({
         const newPixelsMatrix = [...pixelsMatrix];
 
         modifiedPixels.forEach((pixel) => {
-            const [i, j] = pixel.split(',').map(Number);
+            const [i, j] = pixel.split(",").map(Number);
             newPixelsMatrix[i][j].index++;
         });
 
@@ -401,7 +464,7 @@ export const useStore = create<State & Actions>((set, get) => ({
             }
 
             // Convert the custom canvas to a downloadable image
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = canvas.toDataURL();
             a.download = "image.png";
             a.click();
@@ -418,14 +481,18 @@ export const useStore = create<State & Actions>((set, get) => ({
      */
     saveGrid: () => {
         // Serialize the grid data
-        const serializedData = JSON.stringify(compress({
-            0: get().gridSize,
-            1: get().pixelsMatrix.flat().map(pixel => pixel.colorsArray[pixel.index])
-        }));
+        const serializedData = JSON.stringify(
+            compress({
+                0: get().gridSize,
+                1: get()
+                    .pixelsMatrix.flat()
+                    .map((pixel) => pixel.colorsArray[pixel.index]),
+            })
+        );
 
         const blob = new Blob([serializedData], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = url;
         a.download = "data.json";
         a.click();
@@ -460,24 +527,36 @@ export const useStore = create<State & Actions>((set, get) => ({
                         for (let j = 0; j < gridSize; j++) {
                             pixelsMatrix[i][j] = {
                                 index: 0,
-                                colorsArray: [colors[i * gridSize + j]]
-                            }
+                                colorsArray: [colors[i * gridSize + j]],
+                            };
                         }
                     }
 
                     get().setGridSize(gridSize);
                     set({ pixelsMatrix });
-                }
-                else {
-                    alert("Invalid file format or data. Please check the file and try again.");
+                } else {
+                    alert(
+                        "Invalid file format or data. Please check the file and try again."
+                    );
                 }
 
                 fileInput.value = "";
-            }
+            };
 
             reader.readAsText(file);
         }
-    }
+    },
+
+    updateInterpolationInfo: (cell, time) => {
+        set({
+            interpolationInfo: {
+                cell,
+                x: cell ? Number(cell.dataset.i) : -1,
+                y: cell ? Number(cell.dataset.j) : -1,
+                time,
+            },
+        });
+    },
 }));
 
 /**
@@ -496,10 +575,12 @@ const validateSerializedData = (serializedData: string) => {
         if (Object.keys(data).length !== 2) return false;
 
         // Check if the grid size is a number between 1 and 64
-        if (typeof data[0] !== "number" || data[0] < 1 || data[0] > 64) return false;
+        if (typeof data[0] !== "number" || data[0] < 1 || data[0] > 64)
+            return false;
 
         // Check if the colors array has the correct length
-        if (!Array.isArray(data[1]) || data[1].length !== data[0] * data[0]) return false;
+        if (!Array.isArray(data[1]) || data[1].length !== data[0] * data[0])
+            return false;
 
         // Check if each color is a string in the format "#RRGGBB"
         for (const color of data[1]) {
@@ -509,8 +590,7 @@ const validateSerializedData = (serializedData: string) => {
         }
 
         return true;
-    }
-    catch {
+    } catch {
         return false;
     }
-}
+};

@@ -1,20 +1,20 @@
-import { FaUndo, FaRedo } from "react-icons/fa";
-import { FiUpload, FiDownload } from "react-icons/fi";
-import { HiPencil } from "react-icons/hi2";
-import { BiSolidEraser } from "react-icons/bi";
-import { IoMdColorFill } from "react-icons/io";
-import { GrClearOption } from "react-icons/gr";
-import { FaWandMagicSparkles } from "react-icons/fa6";
-import GridOnIcon from "@mui/icons-material/GridOn";
 import CameraIcon from "@mui/icons-material/Camera";
 import DensityLargeIcon from "@mui/icons-material/DensityLarge";
+import GridOnIcon from "@mui/icons-material/GridOn";
 import Slider from "@mui/material/Slider";
 import Tooltip from "@mui/material/Tooltip";
+import { BiSolidEraser } from "react-icons/bi";
+import { FaRedo, FaUndo } from "react-icons/fa";
+import { FaWandMagicSparkles } from "react-icons/fa6";
+import { FiDownload, FiUpload } from "react-icons/fi";
+import { GrClearOption } from "react-icons/gr";
+import { HiPencil } from "react-icons/hi2";
+import { IoMdColorFill } from "react-icons/io";
 import { useStore } from "../store/store";
-import { StateButton } from "./StateButton";
-import { ActionButton } from "./ActionButton";
+import ActionButton from "./ActionButton";
+import StateButton from "./StateButton";
 
-export const Settings: React.FC = () => {
+const Settings: React.FC = () => {
     // Extract state and actions from the store
     const color = useStore((state) => state.color);
     const mirrorX = useStore((state) => state.mirrorX);
@@ -191,3 +191,5 @@ export const Settings: React.FC = () => {
         </div>
     )
 }
+
+export default Settings;
