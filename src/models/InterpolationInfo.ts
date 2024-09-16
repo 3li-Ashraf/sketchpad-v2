@@ -6,10 +6,10 @@
  * @property {number} time - The last drawn time.
  */
 export default interface InterpolationInfo {
-    cell: HTMLDivElement | null; // last drawn cell
-    x: number; // last drawn x
-    y: number; // last drawn y
-    time: number; // last drawn time
+    cell: HTMLDivElement | null;
+    x: number;
+    y: number;
+    time: number;
 }
 
 /**
