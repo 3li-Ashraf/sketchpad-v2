@@ -16,25 +16,35 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
     const updateInterpolationInfo = useStore((state) => state.updateInterpolationInfo);
 
     // Draws the event target cell
-    const drawEventTarget = (target: EventTarget) => {
+    const drawEventTarget = (target: EventTarget, ownerDraw: boolean = false) => {
         const cell = target as HTMLDivElement;
         const x = Number(cell.dataset.i);
         const y = Number(cell.dataset.j);
 
-        if (!isNaN(x) && !isNaN(y)) {
-            draw(x, y);
+        const delegate = () => {
+            if (!isNaN(x) && !isNaN(y)) {
+                draw(x, y);
+            }
+        };
+
+        // draw cell if owner wont handle it
+        if (!ownerDraw) {
+            delegate();
         }
 
-        return { cell, x, y };
+        return { cell, x, y, delegate };
     };
 
     const drawCellInterpolated = (target: EventTarget) => {
-        // draw current cell
-        const { cell, x, y } = drawEventTarget(target);
+        // get current cell info
+        const { cell, x, y, delegate } = drawEventTarget(target, true);
 
         // try to interpolate cells
         const currentTime = Date.now();
         interpolateCells(x, y, currentTime, interpolationInfo, draw);
+
+        // draw actual cell
+        delegate();
 
         // update interpolation info
         updateInterpolationInfo(cell, currentTime);
