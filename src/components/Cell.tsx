@@ -14,6 +14,7 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
 
     const draw = useStore((state) => state.draw);
     const updateInterpolationInfo = useStore((state) => state.updateInterpolationInfo);
+    const clearLastDrawnCell = useStore((state) => state.clearLastDrawnCell);
 
     // Draws the event target cell
     const drawEventTarget = (target: EventTarget, ownerDraw: boolean = false) => {
@@ -21,10 +22,13 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
         const x = Number(cell.dataset.i);
         const y = Number(cell.dataset.j);
 
+        // delegate draw to owner
         const delegate = () => {
             if (!isNaN(x) && !isNaN(y)) {
-                draw(x, y);
+                return draw(x, y);
             }
+
+            return false;
         };
 
         // draw cell if owner wont handle it
@@ -41,13 +45,15 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
 
         // try to interpolate cells
         const currentTime = Date.now();
-        interpolateCells(x, y, currentTime, interpolationInfo, draw);
+        const numInterpolatedCells = interpolateCells(x, y, currentTime, interpolationInfo, draw);
 
         // draw actual cell
-        delegate();
+        const hasDrawnCell = delegate();
 
         // update interpolation info
-        updateInterpolationInfo(cell, currentTime);
+        if (hasDrawnCell || numInterpolatedCells > 0) {
+            updateInterpolationInfo(cell, currentTime);
+        }
     };
 
     const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
@@ -98,8 +104,10 @@ const Cell: React.FC<CellProps> = ({ i, j, pixel }) => {
             }}
             onMouseDown={handleMouseDown}
             onMouseEnter={handleMouseEnter}
+            onMouseUp={clearLastDrawnCell}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
+            onTouchEnd={(e) => { if (e.touches.length == 0) clearLastDrawnCell(); }}
             onContextMenu={(event) => event.preventDefault()}
         />
     );

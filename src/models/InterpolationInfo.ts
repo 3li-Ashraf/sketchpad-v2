@@ -19,56 +19,60 @@ export default interface InterpolationInfo {
  * @param {number} currentTime - The current time.
  * @param {InterpolationInfo} interpolationInfo - The interpolation information.
  * @param {Function} draw - The draw function.
+ * @returns {number} The number of drawn cells.
  */
 export const interpolateCells = (
     x1: number,
     y1: number,
     currentTime: number,
     interpolationInfo: InterpolationInfo,
-    draw: (x: number, y: number) => void
+    draw: (x: number, y: number) => boolean
 ) => {
-    if (interpolationInfo.cell == null) return;
+    if (interpolationInfo.cell == null || currentTime - interpolationInfo.time > 100)
+        return 0;
 
-    // interpolate mouse movement if time diff < 100ms
-    const timeDiff = currentTime - interpolationInfo.time;
-    if (timeDiff < 100) {
-        // get start and end points
-        const x0 = interpolationInfo.x;
-        const y0 = interpolationInfo.y;
+    let numDrawn = 0;
 
-        // calculate deltas
-        const dx = Math.abs(x1 - x0);
-        const dy = Math.abs(y1 - y0);
+    // get start and end points
+    const x0 = interpolationInfo.x;
+    const y0 = interpolationInfo.y;
 
-        // calculate steps
-        const sx = (x0 < x1) ? 1 : -1;
-        const sy = (y0 < y1) ? 1 : -1;
+    // calculate deltas
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
 
-        // calculate error
-        let err = dx - dy;
+    // calculate steps
+    const sx = (x0 < x1) ? 1 : -1;
+    const sy = (y0 < y1) ? 1 : -1;
 
-        // current position
-        let xCurrent = x0;
-        let yCurrent = y0;
+    // calculate error
+    let err = dx - dy;
 
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            // draw current pixel
-            draw(xCurrent, yCurrent);
+    // current position
+    let xCurrent = x0;
+    let yCurrent = y0;
 
-            // are we done?
-            if (xCurrent === x1 && yCurrent === y1) break;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        // draw current pixel
+        if (draw(xCurrent, yCurrent)) {
+            numDrawn++;
+        }
 
-            // update error and current position
-            const e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                xCurrent += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                yCurrent += sy;
-            }
+        // are we done?
+        if (xCurrent === x1 && yCurrent === y1) break;
+
+        // update error and current position
+        const e2 = 2 * err;
+        if (e2 > -dy) {
+            err -= dy;
+            xCurrent += sx;
+        }
+        if (e2 < dx) {
+            err += dx;
+            yCurrent += sy;
         }
     }
+
+    return numDrawn;
 };

@@ -27,6 +27,7 @@ interface State {
     pixelsMatrix: Pixel[][];
     drawingTool: "pen" | "eraser" | "colorfulPen" | "fill";
     interpolationInfo: InterpolationInfo;
+    lastDrawnCell: number | null;
 }
 
 /**
@@ -43,11 +44,12 @@ interface State {
  * @property {() => void} toggleMirrorY - Toggle vertical mirroring.
  * @property {() => void} toggleGridLines - Toggle the visibility of grid lines.
  * @property {(color: string) => void} setColor - Set the current color.
- * @property {(i: number, j: number) => void} draw - Draw on the grid at specified coordinates.
+ * @property {(i: number, j: number) => boolean} draw - Draw on the grid at specified coordinates.
  * @property {(gridSize: number) => void} setGridSize - Set the grid size, destruct old grid and construct new grid.
  * @property {(drawingTool: "pen" | "eraser" | "colorfulPen" | "fill") => void} setDrawingTool - Set the current drawing tool.
  * @property {(pixelsMatrix: Pixel[][], i: number, j: number, fillColor: string, matchingColor: string, modifiedPixels: string[]) => void} fill - Fill a contiguous area of the grid with a specified color.
  * @property {(cell: HTMLDivElement | null, time: number) => void} updateInterpolationInfo - Update the grid cells interpolation information.
+ * @property {() => void} clearLastDrawnCell - Clear the last drawn cell.
  */
 interface Actions {
     undo: () => void;
@@ -62,7 +64,7 @@ interface Actions {
     toggleMirrorY: () => void;
     toggleGridLines: () => void;
     setColor: (color: string) => void;
-    draw: (i: number, j: number) => void;
+    draw: (i: number, j: number) => boolean;
     setGridSize: (gridSize: number) => void;
     setDrawingTool: (
         drawingTool: "pen" | "eraser" | "colorfulPen" | "fill"
@@ -76,6 +78,7 @@ interface Actions {
         modifiedPixels: string[]
     ) => void;
     updateInterpolationInfo: (cell: HTMLDivElement | null, time: number) => void;
+    clearLastDrawnCell: () => void;
 }
 
 /**
@@ -100,6 +103,7 @@ export const useStore = create<State & Actions>((set, get) => ({
         y: -1,
         time: -1,
     },
+    lastDrawnCell: null,
 
     /**
      * Set the current color.
@@ -227,6 +231,7 @@ export const useStore = create<State & Actions>((set, get) => ({
      * Draw on the grid at specified coordinates.
      * @param {number} i - The row index of the pixel.
      * @param {number} j - The column index of the pixel.
+     * @returns {boolean} - Whether the pixel was modified.
      * @example
      * draw(0, 0);
      */
@@ -240,7 +245,12 @@ export const useStore = create<State & Actions>((set, get) => ({
             redoArray,
             drawingTool,
             pixelsMatrix,
+            lastDrawnCell,
         } = get();
+
+        // Do not re-draw cells
+        const cellIndex = j * gridSize + i;
+        if (lastDrawnCell === cellIndex) return false;
 
         const modifiedPixels: string[] = []; // Array of pixels that will be modified by the drawing tool
         const newPixelsMatrix = [...pixelsMatrix];
@@ -301,7 +311,9 @@ export const useStore = create<State & Actions>((set, get) => ({
             }
 
             undoArray.push(modifiedPixels);
-            set({ pixelsMatrix: newPixelsMatrix });
+            set({ pixelsMatrix: newPixelsMatrix, lastDrawnCell: cellIndex });
+
+            return true;
         } else if (
             drawingTool === "fill" &&
             pixel.colorsArray[pixel.index] !== color
@@ -324,8 +336,10 @@ export const useStore = create<State & Actions>((set, get) => ({
             );
 
             undoArray.push(modifiedPixels);
-            set({ pixelsMatrix: newPixelsMatrix });
+            set({ pixelsMatrix: newPixelsMatrix, lastDrawnCell: null });
         }
+
+        return false;
     },
 
     /**
@@ -557,6 +571,8 @@ export const useStore = create<State & Actions>((set, get) => ({
             },
         });
     },
+
+    clearLastDrawnCell: () => set({ lastDrawnCell: null }),
 }));
 
 /**
