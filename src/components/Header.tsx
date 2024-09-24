@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import SettingsIcon from "@mui/icons-material/Settings";
 
-export const Header: React.FC = () => {
+const Header: React.FC = () => {
     const [settingsVisible, setSettingsVisible] = useState(false);
 
     // Function to handle clicks outside the settings panel
@@ -50,3 +50,5 @@ export const Header: React.FC = () => {
         </header>
     )
 }
+
+export default Header;
